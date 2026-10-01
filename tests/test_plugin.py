@@ -31,26 +31,26 @@ def test_plugin_yields_pycosat():
 
 
 def test_plugin_has_classic_true(monkeypatch: Monkeypatch):
-    monkeypatch.setattr(plugin, "conda_version", "26.7.1")
+    monkeypatch.setattr(plugin, "conda_version", "26.9")
     assert plugin._conda_has_classic()
     names = [s.name for s in conda_solvers()]
     assert "classic" not in names
 
 
 def test_plugin_has_classic_false(monkeypatch: Monkeypatch):
-    monkeypatch.setattr(plugin, "conda_version", "26.7.3.dev66")
+    monkeypatch.setattr(plugin, "conda_version", "26.10")
     assert not plugin._conda_has_classic()
     names = [s.name for s in conda_solvers()]
     assert "classic" in names
 
 
 def test_plugin_has_classic_is_cached(monkeypatch: Monkeypatch):
-    monkeypatch.setattr(plugin, "conda_version", "26.7.2")
+    monkeypatch.setattr(plugin, "conda_version", "26.9")
     assert plugin._conda_has_classic()
 
     # changing conda_version after the first call has no effect until the
     # cache is cleared
-    monkeypatch.setattr(plugin, "conda_version", "26.7.3.dev66")
+    monkeypatch.setattr(plugin, "conda_version", "26.10")
     assert plugin._conda_has_classic()
 
     plugin._conda_has_classic.cache_clear()
