@@ -15,15 +15,15 @@ from packaging.version import Version
 
 from .solve import PycosatSolver
 
-# conda ships a built-in ``classic`` solver through 26.7.2; the remove-classic
-# work no longer loads it.
-CLASSIC_LAST_RELEASE = Version("26.7.2")
+# conda ships a built-in ``classic`` solver through all 26.9.x releases; the
+# remove-classic work no longer loads it starting with 26.10.
+CLASSIC_FIRST_RELEASE_WITHOUT = Version("26.10")
 
 
 @cache
 def _conda_has_classic() -> bool:
     """Return whether conda already ships a built-in ``classic`` solver."""
-    return Version(conda_version) <= CLASSIC_LAST_RELEASE
+    return Version(conda_version) < CLASSIC_FIRST_RELEASE_WITHOUT
 
 
 @hookimpl
