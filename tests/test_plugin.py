@@ -37,6 +37,15 @@ def test_plugin_has_classic_true(monkeypatch: Monkeypatch):
     assert "classic" not in names
 
 
+def test_plugin_has_classic_true_patch_release(monkeypatch: Monkeypatch):
+    # regression test: 26.9.1 (and any other 26.9.x patch release) must still
+    # be treated as "has classic", not just the exact "26.9"/"26.9.0" value.
+    monkeypatch.setattr(plugin, "conda_version", "26.9.1")
+    assert plugin._conda_has_classic()
+    names = [s.name for s in conda_solvers()]
+    assert "classic" not in names
+
+
 def test_plugin_has_classic_false(monkeypatch: Monkeypatch):
     monkeypatch.setattr(plugin, "conda_version", "26.10")
     assert not plugin._conda_has_classic()
