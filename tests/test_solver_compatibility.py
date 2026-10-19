@@ -10,6 +10,7 @@ from conda.base.context import context, reset_context
 from conda.common.serialize import json
 from conda.core.index import Index, ReducedIndex
 from conda.core.prefix_data import PrefixData
+from conda.core.subdir_data import SubdirData
 from conda.exceptions import PackagesNotFoundError
 from conda.models.match_spec import MatchSpec
 from conda.models.records import PackageRecord
@@ -185,3 +186,57 @@ def test_missing_pinned_version_reports_channels(solver_env, monkeypatch):
 
     assert tuple(map(str, exc.value.packages)) == ("dependency=99",)
     assert exc.value.channel_urls == channels
+
+
+@pytest.mark.parametrize(
+    "has_conda_self,is_frozen,expected_command",
+    [
+        (True, False, "conda self update"),
+        (True, True, "conda self update"),
+        (False, False, "conda update -n base -c test conda"),
+        (False, True, "conda update -n base -c test conda --override-frozen"),
+    ],
+)
+def test_outdated_conda_update_command(
+    solver_env, monkeypatch, mocker, capsys, has_conda_self, is_frozen, expected_command
+):
+    monkeypatch.setenv("CONDA_NOTIFY_OUTDATED_CONDA", "true")
+    monkeypatch.setenv("CONDA_QUIET", "false")
+    reset_context(search_path=())
+    solver_env.installed_packages = [
+        PackageRecord(
+            name=name,
+            version="0.0.1",
+            build="0",
+            build_number=0,
+            subdir="noarch",
+            channel="test",
+        )
+        for name in (("conda", "conda-self") if has_conda_self else ("conda",))
+    ]
+    solver = solver_env.solver(add=(), remove=())
+    mocker.patch(
+        "conda.base.context.Context.conda_prefix",
+        new_callable=mocker.PropertyMock,
+        return_value=solver.prefix,
+    )
+    if is_frozen:
+        (PrefixData(solver.prefix).prefix_path / "conda-meta" / "frozen").touch()
+    mocker.patch.object(
+        SubdirData,
+        "query_all",
+        return_value=[
+            PackageRecord.from_objects(
+                solver_env.installed_packages[0], version="99.0.0"
+            )
+        ],
+    )
+
+    solver._notify_conda_outdated(link_precs=())
+
+    commands = [
+        line.strip()
+        for line in capsys.readouterr().err.splitlines()
+        if line.strip().startswith(("$ conda", "conda install"))
+    ]
+    assert commands == [f"$ {expected_command}"]
