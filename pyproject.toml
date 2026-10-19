@@ -8,16 +8,15 @@ requires = [
 [project]
 name = "conda-pycosat-solver"
 description = "The `pycosat` solver used in `conda`, also available as `classic`"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy"
 ]
@@ -58,7 +57,7 @@ markers = [
 [tool.ruff]
 exclude = ["tests/data/"]
 show-fixes = true
-target-version = "py38"
+target-version = "py311"
 
 [tool.ruff.lint]
 flake8-type-checking = {exempt-modules = [], strict = true}

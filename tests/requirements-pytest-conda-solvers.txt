@@ -5,8 +5,8 @@
 # pre-installed explicitly.
 
 # conda-pycosat-solver's build backend (see pyproject.toml [build-system])
-setuptools >=71.0
-setuptools-scm
+hatchling >=1.12.2
+hatch-vcs >=0.2.0
 
 # pytest-conda-solvers' own runtime requirements
 coverage

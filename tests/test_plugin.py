@@ -4,15 +4,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from types import SimpleNamespace
 
 import pytest
 
 from conda_pycosat_solver import plugin
 from conda_pycosat_solver.plugin import conda_solvers
 
-if TYPE_CHECKING:
-    from pytest import Monkeypatch
+SUBSET_HOOK_CALLER = "conda.plugins.manager.CondaPluginManager.subset_hook_caller"
 
 
 @pytest.fixture(autouse=True)
@@ -25,33 +24,49 @@ def clear_conda_has_classic_cache():
 
 
 def test_plugin_yields_pycosat():
-    solvers = list(conda_solvers())
-    names = [s.name for s in solvers]
+    names = [s.name for s in conda_solvers()]
     assert "pycosat" in names
 
 
-def test_plugin_has_classic_true(monkeypatch: Monkeypatch):
-    monkeypatch.setattr(plugin, "conda_version", "26.7.1")
+def test_plugin_has_classic_true(mocker):
+    # another plugin (e.g. conda's own built-in classic solver) already
+    # provides a "classic" solver
+    mocker.patch(
+        SUBSET_HOOK_CALLER,
+        return_value=lambda: [[SimpleNamespace(name="classic")]],
+    )
     assert plugin._conda_has_classic()
     names = [s.name for s in conda_solvers()]
     assert "classic" not in names
 
 
-def test_plugin_has_classic_false(monkeypatch: Monkeypatch):
-    monkeypatch.setattr(plugin, "conda_version", "26.7.3.dev66")
+def test_plugin_has_classic_false(mocker):
+    # no other plugin provides a "classic" solver (e.g. the classic-removal
+    # work has landed on this checkout), regardless of what conda.__version__
+    # reports -- a dev/pre-release build of that work can report a version
+    # that sorts before the release it belongs to.
+    mocker.patch(SUBSET_HOOK_CALLER, return_value=lambda: [[]])
     assert not plugin._conda_has_classic()
     names = [s.name for s in conda_solvers()]
     assert "classic" in names
 
 
-def test_plugin_has_classic_is_cached(monkeypatch: Monkeypatch):
-    monkeypatch.setattr(plugin, "conda_version", "26.7.2")
-    assert plugin._conda_has_classic()
+def test_plugin_has_classic_is_cached(mocker):
+    mocked = mocker.patch(
+        SUBSET_HOOK_CALLER,
+        side_effect=[
+            lambda: [[SimpleNamespace(name="classic")]],  # first call
+            lambda: [[]],  # second call
+        ],
+    )
 
-    # changing conda_version after the first call has no effect until the
-    # cache is cleared
-    monkeypatch.setattr(plugin, "conda_version", "26.7.3.dev66")
     assert plugin._conda_has_classic()
+    assert mocked.call_count == 1
+
+    # still cached: a second call must not re-invoke subset_hook_caller
+    assert plugin._conda_has_classic()
+    assert mocked.call_count == 1
 
     plugin._conda_has_classic.cache_clear()
     assert not plugin._conda_has_classic()
+    assert mocked.call_count == 2
