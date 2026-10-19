@@ -14,12 +14,10 @@ from typing import TYPE_CHECKING
 
 from boltons.setutils import IndexedSet
 from conda import CondaError
-from conda import __version__ as CONDA_VERSION
 from conda.auxlib.decorators import memoizedproperty
 from conda.auxlib.ish import dals
 from conda.base.constants import (
     REPODATA_FN,
-    UNKNOWN_CHANNEL,
     DepsModifier,
     UpdateModifier,
 )
@@ -31,7 +29,6 @@ from conda.common.path import get_major_minor_version, paths_equal
 from conda.core.index import Index, ReducedIndex
 from conda.core.prefix_data import PrefixData
 from conda.core.solve import Solver, get_pinned_specs
-from conda.core.subdir_data import SubdirData
 from conda.exceptions import (
     PackagesNotFoundError,
     SpecsConfigurationConflictError,
@@ -1034,58 +1031,6 @@ class PycosatSolver(Solver):
             ssc.solution_precs = tuple(graph.graph)
 
         return ssc
-
-    def _notify_conda_outdated(self, link_precs):
-        if not context.notify_outdated_conda or context.quiet:
-            return
-        current_conda_prefix_rec = PrefixData(context.conda_prefix).get("conda", None)
-        if current_conda_prefix_rec:
-            channel_name = current_conda_prefix_rec.channel.canonical_name
-            if channel_name == UNKNOWN_CHANNEL:
-                channel_name = "defaults"
-
-            # only look for a newer conda in the channel conda is currently installed from
-            conda_newer_spec = MatchSpec(f"{channel_name}::conda>{CONDA_VERSION}")
-
-            if paths_equal(self.prefix, context.conda_prefix):
-                if any(conda_newer_spec.match(prec) for prec in link_precs):
-                    return
-
-            conda_newer_precs = sorted(
-                SubdirData.query_all(
-                    conda_newer_spec,
-                    self.channels,
-                    self.subdirs,
-                    repodata_fn=self._repodata_fn,
-                ),
-                key=lambda x: VersionOrder(x.version),
-                # VersionOrder is fine here rather than r.version_key because all precs
-                # should come from the same channel
-            )
-            if conda_newer_precs:
-                latest_version = conda_newer_precs[-1].version
-                # If conda comes from defaults, ensure we're giving instructions to users
-                # that should resolve release timing issues between defaults and conda-forge.
-                print(
-                    dedent(
-                        f"""
-
-                ==> WARNING: A newer version of conda exists. <==
-                  current version: {CONDA_VERSION}
-                  latest version: {latest_version}
-
-                Please update conda by running
-
-                    $ conda update -n base -c {channel_name} conda
-
-                Or to minimize the number of packages updated during conda update use
-
-                     conda install conda={latest_version}
-
-                """
-                    ),
-                    file=sys.stderr,
-                )
 
     def _prepare(self, prepared_specs):
         # All of this _prepare() method is hidden away down here. Someday we may want to further
