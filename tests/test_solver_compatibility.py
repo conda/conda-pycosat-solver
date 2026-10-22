@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pytest
+from conda import __version__ as conda_version
 from conda.base.constants import UpdateModifier
 from conda.base.context import context, reset_context
 from conda.common.serialize import json
@@ -14,6 +15,7 @@ from conda.core.subdir_data import SubdirData
 from conda.exceptions import PackagesNotFoundError
 from conda.models.match_spec import MatchSpec
 from conda.models.records import PackageRecord
+from conda.models.version import VersionOrder
 from conda.testing.solver_helpers import SimpleEnvironment
 
 from conda_pycosat_solver.solve import PycosatSolver
@@ -188,6 +190,10 @@ def test_missing_pinned_version_reports_channels(solver_env, monkeypatch):
     assert exc.value.channel_urls == channels
 
 
+@pytest.mark.skipif(
+    VersionOrder(conda_version) < VersionOrder("26.7.0"),
+    reason="conda 26.7 introduced the current update-notice commands",
+)
 @pytest.mark.parametrize(
     "has_conda_self,is_frozen,expected_command",
     [
