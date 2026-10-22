@@ -72,7 +72,7 @@ jobs:
           run-post: false  # skip post cleanup
 
       - name: Update conda in base
-        run: conda install -n base --yes --override-channels -c conda-forge "conda>=26.5" conda-pypi
+        run: conda install -n base --yes --override-channels -c conda-forge "conda>=26.5"
 
       - name: Install dependencies
         run: >
@@ -84,12 +84,9 @@ jobs:
           python=${{ matrix.python-version }}
 
       - name: Editable install conda-pycosat-solver and pytest-conda-solvers
-        # Run as separate commands: a single `conda pypi install -e A -e B`
-        # trips a conda-pypi bug where the second editable install reuses a
-        # stale (already deleted) ephemeral package cache directory.
-        run: |
-          conda pypi install --yes -e conda-pycosat-solver
-          conda pypi install --yes -e pytest-conda-solvers
+        run: >-
+          python -m pip install --no-deps --no-build-isolation
+          -e conda-pycosat-solver -e pytest-conda-solvers
 
       - name: Conda Info
         run: python -m conda info --verbose
