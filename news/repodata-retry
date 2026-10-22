@@ -1,0 +1,3 @@
+### Other
+
+* Use `retrying with next repodata source.` for repodata retry messages. (conda/conda#16599)
