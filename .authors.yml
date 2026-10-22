@@ -162,9 +162,11 @@
   - forgotten.programme@gmail.com
 - name: conda-bot
   email: 18747875+conda-bot@users.noreply.github.com
+  github: conda-bot
   num_commits: 9
   first_commit: 2026-06-30 02:41:43
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
+  github: dependabot[bot]
   num_commits: 7
   first_commit: 2025-10-23 10:19:50
