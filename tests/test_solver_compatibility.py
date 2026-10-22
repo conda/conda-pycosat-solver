@@ -12,7 +12,10 @@ from conda.common.serialize import json
 from conda.core.index import Index, ReducedIndex
 from conda.core.prefix_data import PrefixData
 from conda.core.subdir_data import SubdirData
-from conda.exceptions import PackagesNotFoundError
+from conda.exceptions import (
+    NoChannelsConfiguredError,
+    PackagesNotFoundError,
+)
 from conda.models.match_spec import MatchSpec
 from conda.models.records import PackageRecord
 from conda.models.version import VersionOrder
@@ -26,6 +29,40 @@ def solver_env(tmp_path, tmp_pkgs_dir, reset_conda_context, monkeypatch):
     monkeypatch.setenv("CONDA_SOLVER", "pycosat")
     reset_context(search_path=())
     return SimpleEnvironment(tmp_path, PycosatSolver, subdirs=("noarch",))
+
+
+@pytest.mark.parametrize(
+    "method", ["solve_final_state", "solve_for_diff", "solve_for_transaction"]
+)
+def test_requested_packages_without_channels(solver_env, mocker, method):
+    solver_env.repo_packages = {}
+    solver = solver_env.solver(add=("sample",), remove=())
+    collect_metadata = mocker.spy(solver, "_collect_all_metadata")
+
+    with pytest.raises(NoChannelsConfiguredError) as exc:
+        getattr(solver, method)()
+
+    assert exc.value.dump_map()["packages"] == ["sample"]
+    collect_metadata.assert_not_called()
+
+
+@pytest.mark.parametrize("remove_installed", [False, True])
+def test_no_channels_without_requested_packages(solver_env, remove_installed):
+    solver_env.repo_packages = {}
+    if remove_installed:
+        solver_env.installed_packages = [
+            PackageRecord(
+                name="sample",
+                version="1.0",
+                build="0",
+                build_number=0,
+                subdir="noarch",
+                depends=[],
+            )
+        ]
+    solver = solver_env.solver(add=(), remove=("sample",) if remove_installed else ())
+
+    assert not solver.solve_final_state()
 
 
 @pytest.mark.skipif(
