@@ -1,3 +1,0 @@
-### Bug fixes
-
-* Raise `PackagesNotFoundInChannelsError` for unavailable packages and `PackagesNotFoundInPrefixError` for missing installed packages, including the target prefix. (conda/conda#15653)
