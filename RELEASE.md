@@ -41,7 +41,7 @@ The package version comes from Git tags through hatch-vcs.
 1. Merge the reviewed release PR. Check that the draft targets the merged
    commit and that its date and notes are current, then publish the release.
 2. Confirm the `Upload release` workflow succeeds. It attaches the source
-   archive, its SHA-256 checksum, and GitHub artifact attestations. Verify the
+   archive and SHA-256 checksum, and publishes GitHub artifact attestations. Verify the
    checksum and attestation before using the archive in feedstocks.
 3. Update the
    [conda-forge feedstock](https://github.com/conda-forge/conda-pycosat-solver-feedstock)
