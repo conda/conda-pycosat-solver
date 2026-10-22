@@ -1,0 +1,3 @@
+### Bug fixes
+
+* Raise `NoChannelsConfiguredError` when a direct solve requests packages without configured channels. (conda/conda#15345)
