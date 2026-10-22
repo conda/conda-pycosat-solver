@@ -1,72 +1,204 @@
-# Release process
+<!-- edit this in https://github.com/conda/infrastructure -->
 
-Use calendar versions in the form `YY.MM.MICRO`, without a `v` prefix, as
-agreed in [#4](https://github.com/conda/conda-pycosat-solver/issues/4).
-The package version comes from Git tags through hatch-vcs.
+[compare]: https://github.com/conda/conda-pycosat-solver/compare
+[new release]: https://github.com/conda/conda-pycosat-solver/releases/new
+[release docs]: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+[rever docs]: https://regro.github.io/rever-docs
+[Anaconda Recipes]: https://github.com/AnacondaRecipes/conda-pycosat-solver-feedstock
+[conda-forge]: https://github.com/conda-forge/conda-pycosat-solver-feedstock
+[zulip]: https://conda.zulipchat.com/#narrow/channel/480811-releases
 
-## Prepare the release
+# Release Process
 
-1. Search for an existing release tracker before opening an issue titled
-   ``Release `YY.MM.MICRO` ``. Record the release pilot, included changes,
-   downstream dependencies, and the checklist below. Pin the tracker.
-2. Fetch `origin` and its tags. Start a release PR branch from `origin/main`
-   in a clean checkout, preserving unrelated work.
-3. Compare changes since the previous release with the fragments in `news/`.
-   Add missing entries, including changed Python or conda requirements.
-   Move any fragments already shipped into their historical changelog entry.
-4. Keep the `[//]: # (current developments)` marker in `CHANGELOG.md`.
-   Update `.authors.yml` for contributors or aliases that rever does not know.
-   Commit the prepared fragments before generating the release notes.
-5. Run the configured authors and changelog activities together:
+> [!NOTE]
+> Throughout this document are references to the version number as `YY.MM.MICRO`, this should be replaced with the correct version number. Do **not** prefix the version with a lowercase `v`.
 
-   ```console
-   rever --force YY.MM.MICRO
-   ```
+## 1. Open the release issue.
 
-   Rever creates local commits for the author files and changelog, and consumes
-   the news fragments. Review those commits and include the fragment deletions
-   in the release PR. Check that the release date matches the intended date.
-6. Confirm the latest tests, shared solver tests, and canary build passed for
-   the code being released. Check the package version and metadata in built
-   artifacts. For a release needed by a conda PR, also confirm the plugin works
-   with that PR and with the released conda versions it must support.
-7. Push the release branch and open a PR targeting `main`. Link the tracker
-   with `Xref #<issue>` so merging the PR leaves publication work open.
-8. Save a draft GitHub release with the version as its tag, `main` as its target,
-   and the new changelog entry as its notes. Publication follows PR review and
-   merge.
+Create a release issue using the template below. After creating it, pin it for easy access.
 
-## Publish and distribute
+<details>
+<summary><h3>Release Template</h3></summary>
 
-1. Merge the reviewed release PR. Check that the draft targets the merged
-   commit and that its date and notes are current, then publish the release.
-2. Confirm the `Upload release` workflow succeeds. It attaches the source
-   archive and SHA-256 checksum, and publishes GitHub artifact attestations. Verify the
-   checksum and attestation before using the archive in feedstocks.
-3. Update the
-   [conda-forge feedstock](https://github.com/conda-forge/conda-pycosat-solver-feedstock)
-   and [Anaconda Recipes feedstock](https://github.com/AnacondaRecipes/conda-pycosat-solver-feedstock).
-   Update source hashes, Python and conda requirements, and build dependencies
-   as needed. Test both `--solver=pycosat` and `--solver=classic`, and require
-   the installed package and distribution metadata to report the release version.
-4. Confirm the release is installable from each target channel. A merged
-   feedstock PR does not establish package availability.
-5. For coordinated conda releases, raise the conda recipe and test requirements
-   to the published solver version before merging the extraction PR. Record
-   feedstock PRs and package availability in the tracker.
-6. Arrange packaging handoff and release announcements, then close the tracker
-   after its tasks are complete.
-
-## Tracker checklist
-
+#### Title:
 ```markdown
-- [ ] Merge required solver changes
-- [ ] Open the release PR
-- [ ] Review and merge the release PR
-- [ ] Prepare a draft GitHub release
-- [ ] Publish the GitHub release and verify its source archive and attestation
-- [ ] Update the conda-forge feedstock and verify channel availability
-- [ ] Update the Anaconda Recipes feedstock and verify channel availability
-- [ ] Update dependent conda requirements, if applicable
-- [ ] Complete packaging handoff and release announcements
+Release `YY.MM.MICRO`
 ```
+
+#### Body:
+```markdown
+### Summary
+
+Placeholder for `conda-pycosat-solver YY.MM.MICRO` release.
+
+| Pilot | <pilot> |
+|---|---|
+| Co-pilot | <copilot> |
+
+### Tasks
+
+[milestone]: https://github.com/conda/conda-pycosat-solver/milestone/<milestone>
+[process]: https://github.com/conda/conda-pycosat-solver/blob/main/RELEASE.md
+[releases]: https://github.com/conda/conda-pycosat-solver/releases
+[main]: https://github.com/AnacondaRecipes/conda-pycosat-solver-feedstock
+[conda-forge]: https://github.com/conda-forge/conda-pycosat-solver-feedstock
+[zulip]: https://conda.zulipchat.com/#narrow/channel/480811-releases
+
+- [ ] [Complete outstanding PRs][milestone]
+- [ ] Create release PR (see [release process][process])
+- [ ] Create Zulip thread on [#releases][zulip]
+    - [ ] Announce `YY.MM.MICRO` in-progress
+- [ ] [Publish release][releases]
+- [ ] Bump/update feedstocks
+    - [ ] [Anaconda, Inc.'s feedstock][main]
+    - [ ] [conda-forge feedstock][conda-forge]
+- [ ] Hand off to packaging team(s)
+- [ ] Announce release
+    - [ ] Post on Zulip thread
+```
+
+</details>
+
+## 2. Run rever.
+
+<details>
+<summary><h2>Rever steps</h2></summary>
+
+Install [`rever`][rever docs] using whatever your project defines (e.g., a conda environment or a pixi `release` environment). For example, [conda-pypi](https://github.com/conda/conda-pypi) uses `pixi run -e release rever ...`; other projects may use `conda create -n rever conda-forge::rever` and run `rever` directly.
+
+1. Clone and `cd` into the repository if you haven't done so already:
+
+    ```bash
+    $ git clone git@github.com:conda/conda-pycosat-solver.git
+    $ cd conda-pycosat-solver
+    ```
+
+2. Fetch the latest changes and create a versioned branch off `main` for the release PR:
+
+    ```bash
+    $ git fetch origin
+    $ git switch -c changelog-YY.MM.MICRO --no-track origin/main
+    ```
+
+3. Run `rever --activities authors --force YY.MM.MICRO`:
+
+    > **Note:**
+    > Include `--force` when re-running any rever command for the same version; without it, rever skips already-completed activities.
+
+    ```bash
+    $ rever --activities authors --force YY.MM.MICRO
+    ```
+
+    - If rever reports unknown authors, add or update entries in `.authors.yml` (new contributors get a new entry; existing contributors using a new name/email get an `aliases`/`alternate_emails` addition).
+
+    - Verify the result with:
+
+        ```bash
+        $ git shortlog -se
+        ```
+
+      Compare this list against `AUTHORS.md` and repeat until they match.
+
+4. Review news snippets in `news/` (use Markdown, **not** reStructuredText). Add snippets for any undocumented changes using the `news/TEMPLATE` as a guide, naming files `<PR #>-<short-slug>.md`.
+
+    - You can utilize [GitHub's compare view][compare] to review what changes are to be included in this release.
+
+    - Commit when satisfied:
+
+        ```bash
+        $ git add news/
+        $ git commit -m "Update news"
+        ```
+
+5. Ensure the `[//]: # (current developments)` marker is present at the top of `CHANGELOG.md`, then run `rever --activities changelog --force YY.MM.MICRO`:
+
+    ```bash
+    $ rever --activities changelog --force YY.MM.MICRO
+    ```
+
+    - If this succeeds, undo the commit so both activities can be run together in the next step:
+
+        ```bash
+        $ git reset --hard HEAD~1
+        ```
+
+6. Run both activities together so the contributor list is embedded in the changelog entry:
+
+    ```bash
+    $ rever --force YY.MM.MICRO
+    ```
+
+7. Use [GitHub's auto-generated release notes][new release] to identify first-time contributors and add `made their first contribution in <URL>` next to their entry in the Contributors section of `CHANGELOG.md`. See [GitHub docs][release docs] for how to auto-generate the release notes. Commit:
+
+    ```bash
+    $ git add CHANGELOG.md
+    $ git commit -m "Add first-time contributions"
+    ```
+
+8. Push the versioned branch:
+
+    ```bash
+    $ git push -u origin HEAD
+    ```
+
+9. Open the Release PR targeting `main`:
+
+    ```markdown
+    ## Description
+
+    ✂️ snip snip ✂️ the making of a new release.
+
+    Xref #<RELEASE ISSUE>
+    ```
+
+10. [Create][new release] the release and **save as draft**:
+
+    | Field | Value |
+    |---|---|
+    | Choose a tag | `YY.MM.MICRO` |
+    | Target | `main` |
+    | Body | copy/paste from `CHANGELOG.md` |
+
+    > **Note:** Only publish the release after the release PR is merged.
+
+</details>
+
+## 3. Wait for review and approval of the release PR.
+
+## 4. Merge the release PR and publish the release.
+
+Go to the [releases page][new release], add the release notes from `CHANGELOG.md` to the draft, and publish.
+
+## 5. Bump [Anaconda Recipes][Anaconda Recipes] and [conda-forge][conda-forge] feedstocks to use `YY.MM.MICRO`.
+
+Open a PR to bump the Anaconda Recipes feedstock.
+
+For conda-forge, the `regro-cf-autotick-bot` will usually open a PR automatically. Review and merge it (or push fixes to the autotick branch if needed).
+
+> [!NOTE]
+> Conda-forge's PRs will be auto-created via the `regro-cf-autotick-bot`. Follow the instructions below if any changes need to be made to the recipe that were not automatically added (these instructions are only necessary for anyone who is _not_ a conda-forge feedstock maintainer, since maintainers can push changes directly to the autotick branch):
+> - Create a new branch based off of autotick's branch (autotick's branches usually use the `regro-cf-autotick-bot:XX.YY.[$patch_number]_[short hash]` syntax)
+> - Add any changes via commits to that new branch
+> - Open a new PR and push it against the `main` branch
+>
+> Make sure to include a comment on the original `autotick-bot` PR that a new pull request has been created, in order to avoid duplicating work!  `regro-cf-autotick-bot` will close the auto-created PR once the new PR is merged.
+>
+> For more information about this process, please read the ["Pushing to regro-cf-autotick-bot branch" section of the conda-forge documentation](https://conda-forge.org/docs/maintainer/updating_pkgs.html#pushing-to-regro-cf-autotick-bot-branch).
+
+## 6. Hand off to Anaconda's packaging team.
+
+> [!NOTE]
+> This step should NOT be done past Thursday morning EST; please start the process on a Monday, Tuesday, or Wednesday instead in order to avoid any potential debugging sessions over evenings or weekends.
+
+<details>
+<summary>Internal process</summary>
+
+1. Open packaging request in #package_requests Slack channel, include links to the Release PR and feedstock PRs.
+
+2. Message packaging team/PM to let them know that a release has occurred and that you are the release manager.
+
+</details>
+
+## 7. Announce the release.
+
+Post the release announcement on the Zulip thread in [#releases][zulip].
