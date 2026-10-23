@@ -22,6 +22,7 @@ from conda.models.records import PackageRecord
 from conda.models.version import VersionOrder
 from conda.testing.solver_helpers import SimpleEnvironment
 
+from conda_pycosat_solver import solve as solve_module
 from conda_pycosat_solver.solve import PycosatSolver
 
 
@@ -85,6 +86,39 @@ def test_remove_missing_package_reports_prefix(solver_env):
     error_details = exc.value.dump_map()
     assert error_details["package_name"] == ("sample",)
     assert error_details["prefix"] == solver.prefix
+
+
+def test_nondefault_repodata_retry_message(solver_env, mocker):
+    solver_env.repo_packages = [
+        PackageRecord(
+            name="sample",
+            version="1.0",
+            build="0",
+            build_number=0,
+            subdir="noarch",
+            depends=[],
+        )
+    ]
+    fixture_solver = solver_env.solver(add=("sample",), remove=())
+    solver = PycosatSolver(
+        prefix=fixture_solver.prefix,
+        channels=fixture_solver.channels,
+        subdirs=("noarch",),
+        specs_to_add=("sample",),
+        repodata_fn="current_repodata.json",
+    )
+    spinner = mocker.spy(solve_module, "get_spinner")
+
+    solution = solver.solve_final_state()
+
+    assert [record.name for record in solution] == ["sample"]
+    solve_calls = [
+        call for call in spinner.call_args_list if call.args == ("Solving environment",)
+    ]
+    assert len(solve_calls) == 1
+    assert solve_calls[0].kwargs["fail_message"] == (
+        "retrying with next repodata source.\n"
+    )
 
 
 @pytest.mark.skipif(
