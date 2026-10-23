@@ -30,6 +30,7 @@ from conda.core.index import Index, ReducedIndex
 from conda.core.prefix_data import PrefixData
 from conda.core.solve import Solver, get_pinned_specs
 from conda.exceptions import (
+    NoChannelsConfiguredError,
     PackagesNotFoundError,
     SpecsConfigurationConflictError,
     UnsatisfiableError,
@@ -116,6 +117,11 @@ class PycosatSolver(Solver):
                 the solved state of the environment.
 
         """
+        if self.specs_to_add and not self.channels:
+            raise NoChannelsConfiguredError(
+                packages=[spec.name for spec in self.specs_to_add if spec.name],
+            )
+
         if prune and update_modifier == UpdateModifier.FREEZE_INSTALLED:
             update_modifier = NULL
         if update_modifier is NULL:
