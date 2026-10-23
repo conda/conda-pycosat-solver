@@ -63,20 +63,20 @@ conda/infrastructure:
   # Cadence release file
   # - src: templates/releases/RELEASE.md
   # On demand release file
-  # - src: templates/releases/RELEASE_ON_DEMAND.md
-  #   dst: RELEASE.md
-  #   with:
+  - src: templates/releases/RELEASE_ON_DEMAND.md
+    dst: RELEASE.md
+    with:
   #     canary_channel: https://anaconda.org/conda-canary
   #     # CalVer placeholders
-  #     placeholder: YY.MM.MICRO
+      placeholder: YY.MM.MICRO
   #     placeholder_x: YY.MM.x
   #     # SemVer placeholders
   #     placeholder: MAJOR.MINOR.PATCH
   #     placeholder_x: MAJOR.MINOR.x
-  # - src: templates/releases/rever.xsh
-  #   dst: rever.xsh
-  # - src: templates/releases/TEMPLATE
-  #   dst: news/TEMPLATE
+  - src: templates/releases/rever.xsh
+    dst: rever.xsh
+  - src: templates/releases/TEMPLATE
+    dst: news/TEMPLATE
 
   # [optional] stable git archive (scm version detection + checksummed release uploads)
   - src: templates/.gitattributes
