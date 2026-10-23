@@ -13,7 +13,7 @@
 ### Other
 
 * Require Python 3.11 or newer and include Python 3.13 and 3.14 in the package metadata. (#91)
-* Require conda 26.5 or newer to match the solver APIs used by this package.
+* Require conda 26.5 or newer to match the solver APIs used by this package. (#116)
 * Use calendar versioning (`YY.MM.MICRO`), as agreed in #4.
 * Use `retrying with next repodata source.` for repodata retry messages. (conda/conda#16599)
 
