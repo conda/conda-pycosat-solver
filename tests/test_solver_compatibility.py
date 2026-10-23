@@ -14,7 +14,8 @@ from conda.core.prefix_data import PrefixData
 from conda.core.subdir_data import SubdirData
 from conda.exceptions import (
     NoChannelsConfiguredError,
-    PackagesNotFoundError,
+    PackagesNotFoundInChannelsError,
+    PackagesNotFoundInPrefixError,
 )
 from conda.models.match_spec import MatchSpec
 from conda.models.records import PackageRecord
@@ -63,6 +64,27 @@ def test_no_channels_without_requested_packages(solver_env, remove_installed):
     solver = solver_env.solver(add=(), remove=("sample",) if remove_installed else ())
 
     assert not solver.solve_final_state()
+
+
+def test_remove_missing_package_reports_prefix(solver_env):
+    solver_env.repo_packages = [
+        PackageRecord(
+            name="sample",
+            version="1.0",
+            build="0",
+            build_number=0,
+            subdir="noarch",
+            depends=[],
+        )
+    ]
+    solver = solver_env.solver(add=(), remove=("sample",))
+
+    with pytest.raises(PackagesNotFoundInPrefixError) as exc:
+        solver.solve_final_state()
+
+    error_details = exc.value.dump_map()
+    assert error_details["package_name"] == ("sample",)
+    assert error_details["prefix"] == solver.prefix
 
 
 @pytest.mark.skipif(
@@ -220,7 +242,7 @@ def test_missing_pinned_version_reports_channels(solver_env, monkeypatch):
     monkeypatch.setenv("CONDA_PINNED_PACKAGES", "dependency=99")
     reset_context(search_path=())
 
-    with pytest.raises(PackagesNotFoundError) as exc:
+    with pytest.raises(PackagesNotFoundInChannelsError) as exc:
         solver.solve_final_state(update_modifier=UpdateModifier.FREEZE_INSTALLED)
 
     assert tuple(map(str, exc.value.packages)) == ("dependency=99",)
