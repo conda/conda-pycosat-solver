@@ -1,3 +1,0 @@
-### Other
-
-* Replace `IndexedSet` with standard Python collections and remove the direct `boltons` dependency. (conda/conda#15744)

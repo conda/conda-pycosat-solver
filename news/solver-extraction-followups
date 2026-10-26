@@ -1,4 +1,0 @@
-### Bug fixes
-
-* Inherit conda's update notice so it recommends `conda self update` when available and includes `--override-frozen` when needed. (conda/conda#16414)
-* Raise `ResolvePackageNotFound` instead of `TypeError` when the reduced index is empty and a requested package is missing. (conda/conda#16668)

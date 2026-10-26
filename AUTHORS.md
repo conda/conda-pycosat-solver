@@ -26,4 +26,6 @@ Authors are sorted alphabetically.
 * Travis Hathaway
 * Travis Swicegood
 * Trent Nelson
+* conda-bot
+* dependabot[bot]
 * pre-commit CI
