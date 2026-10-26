@@ -16,6 +16,7 @@
 * Require conda 26.5 or newer to match the solver APIs used by this package. (#116)
 * Use calendar versioning (`YY.MM.MICRO`), as agreed in #4.
 * Use `retrying with next repodata source.` for repodata retry messages. (conda/conda#16599)
+* Replace `IndexedSet` with standard Python collections, return tuples consistently from `solve_final_state()`, and remove the direct `boltons` dependency. (#127)
 
 ### Contributors
 
