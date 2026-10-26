@@ -1,3 +1,0 @@
-### Other
-
-* Require conda 26.5 or newer to match the solver APIs used by this package. (#116)
