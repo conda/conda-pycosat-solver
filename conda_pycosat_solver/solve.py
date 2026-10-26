@@ -12,7 +12,6 @@ from logging import DEBUG, getLogger
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
-from boltons.setutils import IndexedSet
 from conda import CondaError
 from conda.auxlib.decorators import memoizedproperty
 from conda.auxlib.ish import dals
@@ -81,7 +80,7 @@ class PycosatSolver(Solver):
         ignore_pinned=NULL,
         force_remove=NULL,
         should_retry_solve=False,
-    ) -> tuple[PackageRecord]:
+    ) -> tuple[PackageRecord, ...]:
         """Gives the final, solved state of the environment.
 
         Args:
@@ -113,7 +112,7 @@ class PycosatSolver(Solver):
                 whether to call find_conflicts (slow) in ssc.r.solve
 
         Returns:
-            tuple[PackageRecord]:
+            tuple[PackageRecord, ...]:
                 In sorted dependency order from roots to leaves, the package references for
                 the solved state of the environment.
 
@@ -174,7 +173,7 @@ class PycosatSolver(Solver):
                 for prec in ssc.solution_precs
                 if not any(spec.match(prec) for spec in self.specs_to_remove)
             )
-            return IndexedSet(PrefixGraph(solution).graph)
+            return tuple(PrefixGraph(solution).graph)
 
         # Check if specs are satisfied by current environment. If they are, exit early.
         if (
@@ -188,7 +187,7 @@ class PycosatSolver(Solver):
             else:
                 # All specs match a package in the current environment.
                 # Return early, with a solution that should just be PrefixData().iter_records()
-                return IndexedSet(PrefixGraph(ssc.solution_precs).graph)
+                return tuple(PrefixGraph(ssc.solution_precs).graph)
 
         if not ssc.r:
             with get_spinner(f"Collecting package metadata ({self._repodata_fn})"):
@@ -248,7 +247,7 @@ class PycosatSolver(Solver):
 
         time_recorder.log_totals()
 
-        ssc.solution_precs = IndexedSet(PrefixGraph(ssc.solution_precs).graph)
+        ssc.solution_precs = tuple(PrefixGraph(ssc.solution_precs).graph)
         log.debug(
             "solved prefix %s\n  solved_linked_dists:\n    %s\n",
             self.prefix,
@@ -787,7 +786,7 @@ class PycosatSolver(Solver):
 
     @time_recorder(module_name=__name__)
     def _run_sat(self, ssc):
-        final_environment_specs = IndexedSet(
+        final_environment_specs = dict.fromkeys(
             (
                 *ssc.specs_map.values(),
                 *ssc.track_features_specs,
@@ -800,7 +799,7 @@ class PycosatSolver(Solver):
             raise PackagesNotFoundInChannelsError(absent_specs, context.channels)
 
         # We've previously checked `solution` for consistency (which at that point was the
-        # pre-solve state of the environment). Now we check our compiled set of
+        # pre-solve state of the environment). Now we check our compiled list of
         # `final_environment_specs` for the possibility of a solution.  If there are conflicts,
         # we can often avoid them by neutering specs that have a target (e.g. removing version
         # constraint) and also making them optional. The result here will be less cases of
@@ -853,12 +852,12 @@ class PycosatSolver(Solver):
             for spec in conflicting_specs:
                 if spec.target and not spec.optional:
                     specs_modified = True
-                    final_environment_specs.remove(spec)
+                    final_environment_specs.pop(spec, None)
                     if spec.get("version"):
                         neutered_spec = MatchSpec(spec.name, version=spec.version)
                     else:
                         neutered_spec = MatchSpec(spec.name)
-                    final_environment_specs.add(neutered_spec)
+                    final_environment_specs.setdefault(neutered_spec)
                     ssc.specs_map[spec.name] = neutered_spec
             if specs_modified:
                 conflicting_specs = set(
@@ -910,9 +909,9 @@ class PycosatSolver(Solver):
                         _ for _ in ssc.solution_precs if _.name != name
                     ]
                     ssc.solution_precs.append(prec)
-                    final_environment_specs.add(spec)
+                    final_environment_specs.setdefault(spec)
 
-        ssc.final_environment_specs = final_environment_specs
+        ssc.final_environment_specs = tuple(final_environment_specs)
         return ssc
 
     def _post_sat_handling(self, ssc):
@@ -925,11 +924,12 @@ class PycosatSolver(Solver):
             #
             # Help information notes that use of NO_DEPS is expected to lead to broken
             # environments.
-            _no_deps_solution = IndexedSet(ssc.prefix_data.iter_records())
+            starting_records = tuple(ssc.prefix_data.iter_records())
+            _no_deps_solution = set(starting_records)
             only_remove_these = {
                 prec
                 for spec in self.specs_to_remove
-                for prec in _no_deps_solution
+                for prec in starting_records
                 if spec.match(prec)
             }
             _no_deps_solution -= only_remove_these
@@ -941,13 +941,13 @@ class PycosatSolver(Solver):
                 if spec.match(prec)
             }
             remove_before_adding_back = {prec.name for prec in only_add_these}
-            _no_deps_solution = IndexedSet(
+            _no_deps_solution = set(
                 prec
                 for prec in _no_deps_solution
                 if prec.name not in remove_before_adding_back
             )
             _no_deps_solution |= only_add_these
-            ssc.solution_precs = _no_deps_solution
+            ssc.solution_precs = tuple(PrefixGraph(_no_deps_solution).graph)
 
             # TODO: check if solution is satisfiable, and emit warning if it's not
 

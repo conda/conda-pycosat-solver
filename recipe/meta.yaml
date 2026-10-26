@@ -21,7 +21,6 @@ requirements:
     - hatchling
     - hatch-vcs
   run:
-    - boltons >=23.0.0
     - conda >=26.5
     - frozendict >=2.4.2
     - packaging >=26.3

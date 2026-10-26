@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 from conda import __version__ as conda_version
-from conda.base.constants import UpdateModifier
+from conda.base.constants import DepsModifier, UpdateModifier
 from conda.base.context import context, reset_context
 from conda.common.serialize import json
 from conda.core.index import Index, ReducedIndex
@@ -31,6 +31,69 @@ def solver_env(tmp_path, tmp_pkgs_dir, reset_conda_context, monkeypatch):
     monkeypatch.setenv("CONDA_SOLVER", "pycosat")
     reset_context(search_path=())
     return SimpleEnvironment(tmp_path, PycosatSolver, subdirs=("noarch",))
+
+
+@pytest.mark.parametrize(
+    "add,remove,installed,options,expected",
+    [
+        (("app",), (), (), {}, ("leaf", "dependency", "app")),
+        (
+            (),
+            ("unrelated",),
+            ("app", "dependency", "leaf", "unrelated"),
+            {"force_remove": True},
+            ("leaf", "dependency", "app"),
+        ),
+        (
+            ("app",),
+            (),
+            ("app", "dependency", "leaf"),
+            {"update_modifier": UpdateModifier.SPECS_SATISFIED_SKIP_SOLVE},
+            ("leaf", "dependency", "app"),
+        ),
+        (
+            ("app",),
+            (),
+            ("dependency", "leaf"),
+            {"deps_modifier": DepsModifier.NO_DEPS},
+            ("leaf", "dependency", "app"),
+        ),
+        (
+            (),
+            ("app",),
+            ("app", "dependency", "leaf"),
+            {"deps_modifier": DepsModifier.NO_DEPS},
+            ("leaf", "dependency"),
+        ),
+    ],
+    ids=("solve", "force-remove", "satisfied", "no-deps-add", "no-deps-remove"),
+)
+def test_solution_is_tuple_in_dependency_order(
+    solver_env, add, remove, installed, options, expected
+):
+    records = {
+        name: PackageRecord(
+            name=name,
+            version="1.0",
+            build="0",
+            build_number=0,
+            subdir="noarch",
+            depends=depends,
+        )
+        for name, depends in (
+            ("app", ["dependency"]),
+            ("dependency", ["leaf"]),
+            ("leaf", []),
+            ("unrelated", []),
+        )
+    }
+    solver_env.repo_packages = list(records.values())
+    solver_env.installed_packages = [records[name] for name in installed]
+
+    solution = solver_env.solver(add=add, remove=remove).solve_final_state(**options)
+
+    assert isinstance(solution, tuple)
+    assert tuple(record.name for record in solution) == expected
 
 
 @pytest.mark.parametrize(
