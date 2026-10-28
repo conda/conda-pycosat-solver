@@ -118,7 +118,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda
-          ref: remove-classic-rebase
+          ref: 26.10.x
           path: conda
 
       - name: Checkout conda-pycosat-solver
@@ -230,7 +230,7 @@ jobs:
         if: matrix.test-type == 'conda-pycosat-solver'
         working-directory: conda-pycosat-solver
         env:
-          # CONDA-PYCOSAT-SOLVER: plugin targets conda remove-classic-rebase (Index/ReducedIndex/get_spinner);
+          # CONDA-PYCOSAT-SOLVER: plugin targets conda 26.10.x (Index/ReducedIndex/get_spinner);
           # make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
@@ -306,7 +306,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda
-          ref: remove-classic-rebase
+          ref: 26.10.x
           path: conda
 
       - name: Checkout conda-pycosat-solver
@@ -406,7 +406,7 @@ jobs:
         if: matrix.test-type == 'conda-pycosat-solver'
         working-directory: conda-pycosat-solver
         env:
-          # CONDA-PYCOSAT-SOLVER: plugin targets conda remove-classic-rebase (Index/ReducedIndex/get_spinner);
+          # CONDA-PYCOSAT-SOLVER: plugin targets conda 26.10.x (Index/ReducedIndex/get_spinner);
           # make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
@@ -885,7 +885,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda
-          ref: remove-classic-rebase
+          ref: 26.10.x
           path: conda
 
       - name: Checkout conda-pycosat-solver
@@ -970,7 +970,7 @@ jobs:
         if: matrix.test-type == 'conda-pycosat-solver'
         working-directory: conda-pycosat-solver
         env:
-          # CONDA-PYCOSAT-SOLVER: plugin targets conda remove-classic-rebase (Index/ReducedIndex/get_spinner);
+          # CONDA-PYCOSAT-SOLVER: plugin targets conda 26.10.x (Index/ReducedIndex/get_spinner);
           # make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
@@ -1096,7 +1096,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda  # CONDA-PYCOSAT-SOLVER
-          ref: remove-classic-rebase  # CONDA-PYCOSAT-SOLVER
+          ref: 26.10.x  # CONDA-PYCOSAT-SOLVER
           path: conda
 
       - name: Checkout conda/conda-build
