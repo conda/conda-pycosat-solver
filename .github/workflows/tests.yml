@@ -234,13 +234,14 @@ jobs:
           # make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
+        timeout-minutes: 90
       # /CONDA-PYCOSAT-SOLVER
 
       - name: Upload Coverage
         if: false  # CONDA-PYCOSAT-SOLVER
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          flags: ${{ runner.os }},${{ runner.arch }},${{ matrix.subdir }},${{ matrix.python-version }},${{ matrix.test-type }}
+          flags: ${{ runner.os }},${{ runner.arch }},${{ matrix.python-version }},${{ matrix.test-type }}
           token: ${{ secrets.CODECOV_TOKEN }}  # required
 
       - name: Upload Test Results
@@ -337,11 +338,13 @@ jobs:
           run-post: false  # skip post cleanup
           miniconda-version: ${{ matrix.default-channel == 'defaults' && 'latest' || null }}
           miniforge-version: ${{ matrix.default-channel == 'conda-forge' && 'latest' || null }}
+        timeout-minutes: 10
 
       # Workaround: miniforge ships c-l-s 26.4.0 which has a sqlite locking bug.
       # Remove once miniforge ships c-l-s >=26.4.1.
       - name: Upgrade conda-libmamba-solver
         run: conda install -n base --yes "conda-libmamba-solver>=26.4.1"
+        timeout-minutes: 10
 
       - name: Conda Install
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
@@ -355,6 +358,7 @@ jobs:
           --file ../conda-pycosat-solver/tests/requirements.txt
           --file ../conda-pycosat-solver/tests/requirements-ci.txt
           python=${{ matrix.python-version }}
+        timeout-minutes: 10
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
@@ -377,18 +381,26 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          # The default Azure-hosted Ubuntu apt mirror has been hanging
-          # for hours on the integration jobs. Switch to the canonical
-          # archive and let apt retry on transient failures so a single
-          # mirror outage does not block CI.
-          sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' \
-            /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
-          sudo apt-get update -o Acquire::Retries=3
-          sudo apt-get install -y --no-install-recommends \
-            -o Acquire::Retries=3 ash csh fish tcsh zsh
+          # The Ubuntu apt mirrors on the GitHub runners have hung for hours
+          # on rare occasions (the step normally runs in seconds), surviving
+          # apt's own retries. Bound each apt invocation with `timeout` so a
+          # stall fails fast: try the default runner mirror first, fall back
+          # to the canonical archive if that fails, and let the step fail
+          # otherwise.
+          apt_install_shells() {
+            sudo timeout --kill-after=30 300 apt-get update -o Acquire::Retries=3 &&
+              sudo timeout --kill-after=30 300 apt-get install -y \
+                --no-install-recommends -o Acquire::Retries=3 ash csh fish tcsh zsh
+          }
+          apt_install_shells || {
+            sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' \
+              /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+            apt_install_shells
+          }
           # xonsh is installed with conda in step above
           # Initialize all shells
           python -m conda init --all
+        timeout-minutes: 30
 
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
@@ -401,6 +413,7 @@ jobs:
           --splits=${{ env.PYTEST_SPLITS }}
           -m "${{ env.PYTEST_MARKER }}"
           ${{ env.PYTEST_EXTRA }}
+        timeout-minutes: 90
 
       - name: Run conda-pycosat-solver Tests
         if: matrix.test-type == 'conda-pycosat-solver'
@@ -410,6 +423,7 @@ jobs:
           # make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
+        timeout-minutes: 90
       # /CONDA-PYCOSAT-SOLVER
 
       - name: Upload Coverage
@@ -953,6 +967,7 @@ jobs:
         # for tests/shell, so only necessary for integration tests
         if: matrix.test-type == 'integration'
         run: brew update && brew install fish xonsh
+        timeout-minutes: 10
 
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
@@ -965,6 +980,7 @@ jobs:
           --splits=${{ env.PYTEST_SPLITS }}
           -m "${{ env.PYTEST_MARKER }}"
           ${{ env.PYTEST_EXTRA }}
+        timeout-minutes: 90
 
       - name: Run conda-pycosat-solver Tests
         if: matrix.test-type == 'conda-pycosat-solver'
@@ -974,6 +990,7 @@ jobs:
           # make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
+        timeout-minutes: 90
       # /CONDA-PYCOSAT-SOLVER
 
       - name: Upload Coverage
