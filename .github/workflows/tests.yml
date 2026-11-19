@@ -179,6 +179,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
@@ -215,6 +216,7 @@ jobs:
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
         env:
           CONDA_SOLVER: classic
+          PYTHONPATH: ${{ github.workspace }}/conda-pycosat-solver
         # Windows is sensitive to long paths, using `--basetemp=${{ runner.temp }} to
         # keep the test directories shorter
         run: |
@@ -363,6 +365,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
@@ -408,6 +411,7 @@ jobs:
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
         env:
           CONDA_SOLVER: classic
+          PYTHONPATH: ${{ github.workspace }}/conda-pycosat-solver
         run: >
           python -m pytest
           --cov=conda
@@ -952,6 +956,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
@@ -976,6 +981,7 @@ jobs:
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
         env:
           CONDA_SOLVER: classic
+          PYTHONPATH: ${{ github.workspace }}/conda-pycosat-solver
         run: >
           python -m pytest
           --cov=conda
@@ -1181,6 +1187,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
