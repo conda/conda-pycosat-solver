@@ -213,6 +213,8 @@ jobs:
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
+        env:
+          CONDA_SOLVER: classic
         # Windows is sensitive to long paths, using `--basetemp=${{ runner.temp }} to
         # keep the test directories shorter
         run: |
@@ -404,6 +406,8 @@ jobs:
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
+        env:
+          CONDA_SOLVER: classic
         run: >
           python -m pytest
           --cov=conda
@@ -970,6 +974,8 @@ jobs:
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
+        env:
+          CONDA_SOLVER: classic
         run: >
           python -m pytest
           --cov=conda
