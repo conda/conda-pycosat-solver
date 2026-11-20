@@ -118,7 +118,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda
-          ref: 26.10.x
+          ref: main
           path: conda
 
       - name: Checkout conda-pycosat-solver
@@ -179,6 +179,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
@@ -213,6 +214,9 @@ jobs:
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
+        env:
+          CONDA_SOLVER: classic
+          PYTHONPATH: ${{ github.workspace }}/conda-pycosat-solver
         # Windows is sensitive to long paths, using `--basetemp=${{ runner.temp }} to
         # keep the test directories shorter
         run: |
@@ -230,8 +234,7 @@ jobs:
         if: matrix.test-type == 'conda-pycosat-solver'
         working-directory: conda-pycosat-solver
         env:
-          # CONDA-PYCOSAT-SOLVER: plugin targets conda 26.10.x (Index/ReducedIndex/get_spinner);
-          # make the conda checkout importable now that `pip install -e conda/` is gone
+          # CONDA-PYCOSAT-SOLVER: make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
         timeout-minutes: 90
@@ -307,7 +310,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda
-          ref: 26.10.x
+          ref: main
           path: conda
 
       - name: Checkout conda-pycosat-solver
@@ -362,6 +365,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
@@ -390,7 +394,7 @@ jobs:
           apt_install_shells() {
             sudo timeout --kill-after=30 300 apt-get update -o Acquire::Retries=3 &&
               sudo timeout --kill-after=30 300 apt-get install -y \
-                --no-install-recommends -o Acquire::Retries=3 ash csh fish tcsh zsh
+                --no-install-recommends -o Acquire::Retries=3 csh fish tcsh zsh
           }
           apt_install_shells || {
             sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' \
@@ -405,6 +409,9 @@ jobs:
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
+        env:
+          CONDA_SOLVER: classic
+          PYTHONPATH: ${{ github.workspace }}/conda-pycosat-solver
         run: >
           python -m pytest
           --cov=conda
@@ -419,8 +426,7 @@ jobs:
         if: matrix.test-type == 'conda-pycosat-solver'
         working-directory: conda-pycosat-solver
         env:
-          # CONDA-PYCOSAT-SOLVER: plugin targets conda 26.10.x (Index/ReducedIndex/get_spinner);
-          # make the conda checkout importable now that `pip install -e conda/` is gone
+          # CONDA-PYCOSAT-SOLVER: make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
         timeout-minutes: 90
@@ -899,7 +905,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda
-          ref: 26.10.x
+          ref: main
           path: conda
 
       - name: Checkout conda-pycosat-solver
@@ -950,6 +956,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
@@ -972,6 +979,9 @@ jobs:
       - name: Run conda Tests
         if: matrix.test-type != 'conda-pycosat-solver'  # CONDA-PYCOSAT-SOLVER
         working-directory: conda  # CONDA-PYCOSAT-SOLVER
+        env:
+          CONDA_SOLVER: classic
+          PYTHONPATH: ${{ github.workspace }}/conda-pycosat-solver
         run: >
           python -m pytest
           --cov=conda
@@ -986,8 +996,7 @@ jobs:
         if: matrix.test-type == 'conda-pycosat-solver'
         working-directory: conda-pycosat-solver
         env:
-          # CONDA-PYCOSAT-SOLVER: plugin targets conda 26.10.x (Index/ReducedIndex/get_spinner);
-          # make the conda checkout importable now that `pip install -e conda/` is gone
+          # CONDA-PYCOSAT-SOLVER: make the conda checkout importable now that `pip install -e conda/` is gone
           PYTHONPATH: ${{ github.workspace }}/conda
         run: python -m pytest -vv -m "not slow" --durations=16
         timeout-minutes: 90
@@ -1113,7 +1122,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: conda/conda  # CONDA-PYCOSAT-SOLVER
-          ref: 26.10.x  # CONDA-PYCOSAT-SOLVER
+          ref: main  # CONDA-PYCOSAT-SOLVER
           path: conda
 
       - name: Checkout conda/conda-build
@@ -1178,6 +1187,7 @@ jobs:
 
       # CONDA-PYCOSAT-SOLVER
       - name: Install conda-pycosat-solver
+        if: matrix.test-type == 'conda-pycosat-solver'
         run: python -m pip install -e conda-pycosat-solver/ -vv --no-deps
       # /CONDA-PYCOSAT-SOLVER
 
